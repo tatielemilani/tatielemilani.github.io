@@ -69,10 +69,68 @@
     if (!a) return;
     var href = a.getAttribute("href") || "";
     if (!href || href.charAt(0) === "#" || /^javascript:/i.test(href)) return;
+    if (a.hasAttribute("data-arquivo")) return; // capa de vídeo: conta como vídeo assistido, não como botão
     var destino = "";
     try { destino = /^mailto:/i.test(href) ? "e-mail" : new URL(href, location.href).hostname.replace(/^www\./, ""); } catch (e) { destino = ""; }
     var rotulo = (a.getAttribute("aria-label") || a.textContent || "").replace(/\s+/g, " ").trim().slice(0, 80);
     enviar({ tipo: "clique", categoria: categoria(href), rotulo: rotulo, destino: destino });
+  }, true);
+
+  // Vídeos: qual vídeo (marca e nicho), quantos segundos a pessoa assistiu e até que ponto (%).
+  // Usa as listas do próprio portfólio (TRABALHOS, NICHOS e DESTAQUES) pra saber marca e nicho.
+  var tocando = [];
+  function infoVideo(src) {
+    var caminho = "";
+    try { caminho = new URL(src, location.href).pathname; } catch (e) { caminho = String(src || ""); }
+    var arquivo = (caminho.split("/").pop() || "").replace(/\.mp4$/i, "");
+    try {
+      if (/\/videos\//.test(caminho) && typeof TRABALHOS !== "undefined") {
+        var t = TRABALHOS.filter(function (x) { return x.arquivo === arquivo; })[0];
+        var n = t && typeof NICHOS !== "undefined" ? NICHOS.filter(function (x) { return x.id === t.nicho; })[0] : null;
+        if (t) return { marca: t.marca, nicho: n ? n.nome : t.nicho, arquivo: arquivo };
+      }
+      if (typeof DESTAQUES !== "undefined") {
+        var d = DESTAQUES.filter(function (x) { return String(x.video).split("/").pop().replace(/\.mp4$/i, "") === arquivo; })[0];
+        if (d) return { marca: d.marca, nicho: "Destaques", arquivo: arquivo };
+      }
+    } catch (e) { /* segue com o nome do arquivo */ }
+    return { marca: arquivo, nicho: "Outro", arquivo: arquivo };
+  }
+  function achar(v) { for (var i = 0; i < tocando.length; i++) if (tocando[i].el === v && tocando[i].src === v.currentSrc) return tocando[i]; return null; }
+  function fecharVideo(a) {
+    var i = tocando.indexOf(a); if (i >= 0) tocando.splice(i, 1);
+    if (a.assistido < 2) return; // menos de 2s não conta como visto
+    var info = infoVideo(a.src);
+    enviar({ tipo: "video", categoria: info.nicho, rotulo: info.marca, destino: info.arquivo, segundos: Math.round(a.assistido), rolagem: Math.round(a.maxPct) });
+  }
+  document.addEventListener("play", function (e) {
+    var v = e.target; if (!v || v.tagName !== "VIDEO") return;
+    var a = achar(v);
+    if (!a) { a = { el: v, src: v.currentSrc || v.src, assistido: 0, maxPct: 0, ultimo: v.currentTime }; tocando.push(a); }
+    a.ultimo = v.currentTime;
+  }, true);
+  document.addEventListener("timeupdate", function (e) {
+    var v = e.target; if (!v || v.tagName !== "VIDEO" || v.paused) return;
+    var a = achar(v);
+    if (!a) { a = { el: v, src: v.currentSrc || v.src, assistido: 0, maxPct: 0, ultimo: v.currentTime }; tocando.push(a); return; } // voltou pra aba com o vídeo tocando
+    var passo = v.currentTime - a.ultimo;
+    if (passo > 0 && passo < 1.5) a.assistido += passo; // pulos e voltas não contam como tempo assistido
+    a.ultimo = v.currentTime;
+    if (v.duration) a.maxPct = Math.max(a.maxPct, Math.min(100, (v.currentTime / v.duration) * 100));
+  }, true);
+  document.addEventListener("ended", function (e) {
+    var v = e.target; if (!v || v.tagName !== "VIDEO") return;
+    var a = achar(v); if (a) { a.maxPct = 100; fecharVideo(a); }
+  }, true);
+  // Vídeo que saiu da tela (fechou o player ou passou pro próximo) fecha a conta dele
+  setInterval(function () { tocando.slice().forEach(function (a) { if (!a.el.isConnected || (a.el.currentSrc && a.el.currentSrc !== a.src)) fecharVideo(a); }); }, 2000);
+  function fecharTodos() { tocando.slice().forEach(fecharVideo); }
+
+  // Nicho em que a pessoa clicou pra ver os vídeos
+  document.addEventListener("click", function (e) {
+    var b = e.target && e.target.closest ? e.target.closest("[data-filtro]") : null;
+    if (!b) return;
+    enviar({ tipo: "nicho", categoria: (b.textContent || b.getAttribute("data-filtro") || "").trim().slice(0, 40) });
   }, true);
 
   // Até onde a pessoa rolou a página (0 a 100%)
@@ -99,12 +157,14 @@
     if (document.visibilityState === "hidden") {
       somar();
       sai();
+      fecharTodos();
       if (!mandou && total > 1000) saida();
     } else { visivelDesde = Date.now(); sinal(); }
   });
   window.addEventListener("pagehide", function () {
     somar();
     sai();
+    fecharTodos();
     if (!mandou && Date.now() - inicio > 1000) saida();
   });
 })();
