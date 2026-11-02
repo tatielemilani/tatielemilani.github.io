@@ -91,14 +91,20 @@
   var inicio = Date.now(), visivelDesde = Date.now(), total = 0, mandou = false;
   function somar() { if (visivelDesde) { total += Date.now() - visivelDesde; visivelDesde = 0; } }
   function saida() { medirRolagem(); mandou = true; enviar({ tipo: "saida", segundos: Math.round(total / 1000), rolagem: rolagem }); }
+  // "Quem está no site agora": sinal a cada 30s com a página na tela; "saí" quando fecha ou troca de aba
+  function sinal() { if (document.visibilityState === "visible") enviar({ tipo: "ping", origem: origem }); }
+  setInterval(sinal, 30000);
+  function sai() { enviar({ tipo: "fora" }); }
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === "hidden") {
       somar();
+      sai();
       if (!mandou && total > 1000) saida();
-    } else { visivelDesde = Date.now(); }
+    } else { visivelDesde = Date.now(); sinal(); }
   });
   window.addEventListener("pagehide", function () {
     somar();
+    sai();
     if (!mandou && Date.now() - inicio > 1000) saida();
   });
 })();
