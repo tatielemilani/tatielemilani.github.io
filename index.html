@@ -582,6 +582,23 @@ p{margin:0 0 1em}
 .form-nota{margin:12px 0 0;text-align:center;font-size:.82rem;color:rgba(255,255,255,.75)}
 .campo select{appearance:none;-webkit-appearance:none;cursor:pointer;padding-right:44px;background:rgba(0,0,0,.14) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f1d6c4' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") right 16px center/16px no-repeat}
 .campo select option{color:var(--tinta);background:#fff}
+/* Lista de escolha bonita (no lugar da lista padrão do navegador): o select de verdade fica escondido e guarda o valor */
+.escolha{position:relative}
+.escolha select{position:absolute;inset:0;opacity:0;pointer-events:none}
+.escolha-botao{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;font-family:var(--sans);font-size:1rem;color:#fff;background:rgba(0,0,0,.14);border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:14px 18px;cursor:pointer;transition:border-color .2s,box-shadow .2s,background .2s}
+.escolha-botao.vazio{color:rgba(255,255,255,.75)}
+.escolha-botao:focus-visible,.escolha.aberta .escolha-botao{outline:none;border-color:var(--destaque);background-color:rgba(0,0,0,.2);box-shadow:0 0 0 3px rgba(241,214,196,.2)}
+.escolha-botao svg{width:16px;height:16px;flex-shrink:0;stroke:var(--destaque);transition:transform .25s ease}
+.escolha.aberta .escolha-botao svg{transform:rotate(180deg)}
+.escolha-lista{position:absolute;left:0;min-width:100%;width:max-content;max-width:calc(100vw - 32px);top:calc(100% + 8px);z-index:20;list-style:none;margin:0;padding:6px;background:#fffdf9;border:1px solid rgba(140,29,36,.12);border-radius:16px;box-shadow:0 22px 44px -18px rgba(42,26,24,.45);opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .2s ease,transform .2s ease,visibility .2s}
+.escolha.aberta .escolha-lista{opacity:1;visibility:visible;transform:none}
+.escolha-lista:focus{outline:none}
+.campos-dupla .campo:nth-child(2) .escolha-lista{left:auto;right:0} /* a da direita abre pra dentro da tela */
+.escolha-lista li{position:relative;white-space:nowrap;padding:11px 14px 11px 38px;border-radius:10px;color:var(--tinta);font-size:.95rem;cursor:pointer;transition:background .15s,color .15s}
+.escolha-lista li + li{margin-top:2px}
+.escolha-lista li.ativa{background:var(--creme)}
+.escolha-lista li[aria-selected="true"]{background:rgba(140,29,36,.08);color:var(--vinho);font-weight:600}
+.escolha-lista li[aria-selected="true"]::before{content:"";position:absolute;left:14px;top:50%;width:14px;height:14px;margin-top:-7px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238c1d24' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center/contain no-repeat} /* o tiquezinho de escolhido */
 .btn-enviar{width:100%;justify-content:center;text-transform:uppercase;letter-spacing:.14em;font-size:.85rem;padding-top:18px;padding-bottom:18px}
 .confirmacao{text-align:center;padding:48px 0}
 .confirmacao .check{width:64px;height:64px;border-radius:50%;background:var(--destaque);color:var(--vinho);display:grid;place-items:center;margin:0 auto 20px}
@@ -827,6 +844,7 @@ p{margin:0 0 1em}
   .campo label{font-size:.6rem;letter-spacing:.1em}
   .campo input,.campo textarea,.campo select{font-size:.88rem;padding:12px 14px;border-radius:12px}
   .campo select{padding-right:34px;background-position:right 10px center;background-size:14px}
+  .escolha-botao{font-size:.88rem;padding:12px 14px;border-radius:12px} .escolha-lista li{font-size:.88rem;padding:10px 12px 10px 34px} .escolha-lista li[aria-selected="true"]::before{left:12px}
   .campo textarea{min-height:110px}
 }
 /* Cursor do mouse: setinha arredondada vinho (no computador); em cima de algo clicável ela fica rosinha */
@@ -2031,6 +2049,79 @@ function confirmacao(titulo, texto, extra = '') {
     <div class="check" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
     <h3>${titulo}</h3><p>${texto}</p>${extra}</div>`;
 }
+
+// Listas de escolha do formulário (serviço e orçamento): abre uma lista bonita em vez da padrão do navegador
+document.querySelectorAll('#form-contato select').forEach((select) => {
+  const campo = select.closest('.campo');
+  const label = campo.querySelector('label');
+  const caixa = document.createElement('div');
+  caixa.className = 'escolha';
+  select.parentNode.insertBefore(caixa, select);
+  caixa.appendChild(select);
+  select.tabIndex = -1;
+  select.setAttribute('aria-hidden', 'true');
+  const idBotao = select.id + '-botao', idLista = select.id + '-lista';
+  caixa.insertAdjacentHTML('beforeend', `
+    <button type="button" class="escolha-botao" id="${idBotao}" aria-haspopup="listbox" aria-expanded="false" aria-controls="${idLista}">
+      <span></span><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+    <ul class="escolha-lista" id="${idLista}" role="listbox" tabindex="-1"></ul>`);
+  if (label) label.htmlFor = idBotao;
+  const botao = caixa.querySelector('.escolha-botao'), lista = caixa.querySelector('.escolha-lista');
+  const opcoes = [...select.options].filter(o => o.value !== ''); // o "Selecione..." não entra na lista
+  opcoes.forEach((o, k) => lista.insertAdjacentHTML('beforeend', `<li role="option" id="${select.id}-op${k}" data-i="${o.index}">${esc(o.text)}</li>`));
+  const itens = [...lista.children];
+  let ativa = -1;
+
+  function mostraEscolha() {
+    const o = select.options[select.selectedIndex];
+    botao.querySelector('span').textContent = o ? o.text : '';
+    botao.classList.toggle('vazio', !select.value);
+    itens.forEach(li => li.setAttribute('aria-selected', +li.dataset.i === select.selectedIndex));
+  }
+  function marca(k) {
+    ativa = Math.max(0, Math.min(itens.length - 1, k));
+    itens.forEach((li, j) => li.classList.toggle('ativa', j === ativa));
+    lista.setAttribute('aria-activedescendant', itens[ativa].id);
+    itens[ativa].scrollIntoView({ block: 'nearest' });
+  }
+  function abre() {
+    document.querySelectorAll('.escolha.aberta').forEach(c => c !== caixa && c.fecha());
+    caixa.classList.add('aberta');
+    botao.setAttribute('aria-expanded', 'true');
+    marca(Math.max(0, itens.findIndex(li => +li.dataset.i === select.selectedIndex)));
+    lista.focus({ preventScroll: true });
+  }
+  function fecha(voltarFoco) {
+    caixa.classList.remove('aberta');
+    botao.setAttribute('aria-expanded', 'false');
+    if (voltarFoco) botao.focus();
+  }
+  caixa.fecha = () => fecha(false);
+  function escolhe(k) {
+    select.selectedIndex = +itens[k].dataset.i;
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    mostraEscolha();
+    fecha(true);
+  }
+
+  botao.addEventListener('click', () => caixa.classList.contains('aberta') ? fecha(true) : abre());
+  botao.addEventListener('keydown', (e) => {
+    if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(e.key)) { e.preventDefault(); abre(); }
+  });
+  lista.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); marca(ativa + 1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); marca(ativa - 1); }
+    else if (e.key === 'Home') { e.preventDefault(); marca(0); }
+    else if (e.key === 'End') { e.preventDefault(); marca(itens.length - 1); }
+    else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); escolhe(ativa); }
+    else if (e.key === 'Escape' || e.key === 'Tab') { fecha(e.key === 'Escape'); }
+  });
+  lista.addEventListener('mousemove', (e) => { const li = e.target.closest('li'); if (li) marca(itens.indexOf(li)); });
+  lista.addEventListener('click', (e) => { const li = e.target.closest('li'); if (li) escolhe(itens.indexOf(li)); });
+  document.addEventListener('click', (e) => { if (!caixa.contains(e.target)) fecha(false); });
+  mostraEscolha();
+});
 
 $('#form-contato').addEventListener('submit', (e) => {
   e.preventDefault();
