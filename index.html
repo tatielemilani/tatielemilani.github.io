@@ -554,9 +554,11 @@ p{margin:0 0 1em}
 .contato h2 em{font-family:var(--italico);font-weight:600;letter-spacing:-.02em;color:var(--destaque)}
 .contato .sobretitulo{display:flex;color:rgba(255,255,255,.85);font-size:.72rem;letter-spacing:.14em;font-weight:700;margin:0 0 18px;line-height:19px} /* mesma altura e tamanho do "Nome" do formulário */
 .contato-intro p:not(.sobretitulo){color:rgba(255,255,255,.86);font-size:1.05rem;line-height:1.7;margin:24px 0 36px;max-width:460px}
-.canais{display:flex;flex-direction:column;gap:14px}
-.canais-linha{display:flex;flex-wrap:wrap;gap:14px 32px}
-.canal{display:inline-flex;align-items:center;gap:14px;align-self:flex-start;text-decoration:none;color:#fff;font-size:1rem;transition:color .2s}
+.canais{display:flex;flex-direction:column;gap:12px;max-width:460px}
+.canais-linha{display:flex;flex-wrap:wrap;gap:12px}
+.canais-linha .canal{flex:1 1 180px}
+.canal{display:flex;align-items:center;gap:14px;text-decoration:none;color:#fff;font-size:1rem;background:rgba(0,0,0,.14);border:1px solid rgba(255,255,255,.2);border-radius:18px;padding:10px 18px 10px 10px;transition:color .2s,background .25s,border-color .25s} /* cada contato no seu cartãozinho, igual à proposta */
+.canal:hover{background:rgba(0,0,0,.22);border-color:rgba(241,214,196,.45)}
 .canal-icone{width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.35);display:grid;place-items:center;flex-shrink:0;transition:background .25s,border-color .25s,color .25s}
 .canal-icone svg{width:18px;height:18px}
 .canal:hover{color:var(--destaque)}
