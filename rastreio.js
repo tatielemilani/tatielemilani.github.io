@@ -75,17 +75,30 @@
     enviar({ tipo: "clique", categoria: categoria(href), rotulo: rotulo, destino: destino });
   }, true);
 
-  // Tempo na página: manda quando a pessoa sai (ou troca de aba)
+  // Até onde a pessoa rolou a página (0 a 100%)
+  var rolagem = 0, esperando = false;
+  function medirRolagem() {
+    esperando = false;
+    var doc = document.documentElement;
+    var falta = doc.scrollHeight - window.innerHeight;
+    var pct = falta <= 0 ? 100 : Math.round(((window.scrollY || doc.scrollTop) / falta) * 100);
+    if (pct > rolagem) rolagem = Math.min(100, Math.max(0, pct));
+  }
+  window.addEventListener("scroll", function () { if (!esperando) { esperando = true; setTimeout(medirRolagem, 250); } }, { passive: true });
+  window.addEventListener("load", medirRolagem);
+
+  // Tempo na página e rolagem: manda quando a pessoa sai (ou troca de aba)
   var inicio = Date.now(), visivelDesde = Date.now(), total = 0, mandou = false;
   function somar() { if (visivelDesde) { total += Date.now() - visivelDesde; visivelDesde = 0; } }
+  function saida() { medirRolagem(); mandou = true; enviar({ tipo: "saida", segundos: Math.round(total / 1000), rolagem: rolagem }); }
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === "hidden") {
       somar();
-      if (!mandou && total > 1000) { mandou = true; enviar({ tipo: "saida", segundos: Math.round(total / 1000) }); }
+      if (!mandou && total > 1000) saida();
     } else { visivelDesde = Date.now(); }
   });
   window.addEventListener("pagehide", function () {
     somar();
-    if (!mandou && Date.now() - inicio > 1000) { mandou = true; enviar({ tipo: "saida", segundos: Math.round(total / 1000) }); }
+    if (!mandou && Date.now() - inicio > 1000) saida();
   });
 })();
