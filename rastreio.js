@@ -79,6 +79,13 @@
   }
   var origem = nomeOrigem();
   try { if (origem !== "Navegando no site") sessionStorage.setItem("tm_origem", origem); } catch (e) { /* segue */ }
+  // Depois de ler, tira ?fonte=... e utm_... da barra de endereço: quem visita vê só o endereço limpo
+  try {
+    var limpo = new URLSearchParams(location.search);
+    ["fonte", "f", "utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"].forEach(function (k) { limpo.delete(k); });
+    var resto = limpo.toString();
+    if (resto !== location.search.replace(/^\?/, "")) history.replaceState(history.state, "", location.pathname + (resto ? "?" + resto : "") + location.hash);
+  } catch (e) { /* segue */ }
 
   function enviar(dados) {
     dados.pagina = pagina; dados.visitante = visitante; dados.sessao = sessao;
