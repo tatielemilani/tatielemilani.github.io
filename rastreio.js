@@ -19,29 +19,66 @@
   var caminho = location.pathname.replace(/\/+$/, "/");
   var pagina = /\/bio\/indicacoes\//.test(caminho) ? "Indicações" : /\/bio\//.test(caminho) ? "Bio" : "Portfólio";
 
-  // De onde veio: utm_source tem prioridade; senão, o site anterior
+  // De onde veio, nesta ordem:
+  // 1) link marcado (?fonte=insta-bio, ?fonte=linkedin, ?utm_source=...): o mais certeiro;
+  // 2) o app em que o site abriu (Instagram, TikTok, LinkedIn... deixam a marca no navegador);
+  // 3) o site anterior (Google, LinkedIn, Gmail...);
+  // 4) navegando entre as páginas do site: mantém a origem de quando a pessoa chegou.
   var params = new URLSearchParams(location.search);
-  var utmSource = params.get("utm_source") || params.get("fonte") || "";
+  var utmSource = params.get("fonte") || params.get("utm_source") || params.get("f") || "";
+  var referencia = "";
+  try { referencia = document.referrer ? new URL(document.referrer).hostname.replace(/^www\./, "") : ""; } catch (e) { referencia = ""; }
+  // android-app://com.linkedin.android/ -> com.linkedin.android
+  if (!referencia && /^android-app:\/\//.test(document.referrer || "")) referencia = document.referrer.replace(/^android-app:\/\//, "").split("/")[0];
+
+  var REDES = [
+    [/^(insta|instagram|ig)$/, "Instagram"], [/^(tiktok|tt)$/, "TikTok"], [/^(linkedin|lkd|in)$/, "LinkedIn"],
+    [/^(facebook|fb)$/, "Facebook"], [/^(whatsapp|whats|zap|wpp)$/, "WhatsApp"], [/^(youtube|yt)$/, "YouTube"],
+    [/^(pinterest|pin)$/, "Pinterest"], [/^threads$/, "Threads"], [/^(x|twitter)$/, "X (Twitter)"],
+    [/^(email|e-mail|gmail|mail)$/, "E-mail"], [/^(midiakit|midia-kit|mediakit|kit)$/, "Mídia kit"],
+    [/^(plataforma|plat)$/, "Plataforma"], [/^(agencia|ag)$/, "Agência"], [/^google$/, "Google"], [/^(qr|qrcode)$/, "QR code"]
+  ];
+  var LUGARES = { bio: "Bio", stories: "Stories", story: "Stories", dm: "Direct", direct: "Direct", post: "Post", reels: "Reels",
+    perfil: "Perfil", destaque: "Destaques", destaques: "Destaques", assinatura: "Assinatura", proposta: "Proposta", anuncio: "Anúncio" };
+  function capitalizar(s) { return s.replace(/(^|\s)\S/g, function (l) { return l.toUpperCase(); }); }
+  // "insta-bio" -> "Instagram · Bio"; "plataforma-squid" -> "Plataforma · Squid"
+  function nomeFonte(f) {
+    var partes = f.toLowerCase().replace(/[_+.]/g, "-").split("-").filter(Boolean);
+    if (!partes.length) return "";
+    var rede = null;
+    for (var i = 0; i < REDES.length; i++) if (REDES[i][0].test(partes[0])) { rede = REDES[i][1]; break; }
+    if (!rede) return capitalizar(partes.join(" ")).slice(0, 50);
+    var resto = partes.slice(1).map(function (p) { return LUGARES[p] || p; }).join(" ");
+    return resto ? rede + " · " + capitalizar(resto).slice(0, 40) : rede;
+  }
   function nomeOrigem() {
-    var u = utmSource.toLowerCase();
-    var ref = "";
-    try { ref = document.referrer ? new URL(document.referrer).hostname.replace(/^www\./, "") : ""; } catch (e) { ref = ""; }
+    if (utmSource) return nomeFonte(utmSource);
+    var ref = referencia.toLowerCase();
     var ua = navigator.userAgent || "";
-    var texto = u || ref;
-    if (/instagram|^ig$|l\.instagram/.test(texto) || /Instagram/.test(ua)) return "Instagram";
-    if (/tiktok/.test(texto) || /TikTok|musical_ly|Bytedance/.test(ua)) return "TikTok";
-    if (/facebook|fb\.|^fb$/.test(texto) || /FBAN|FBAV/.test(ua)) return "Facebook";
-    if (/whatsapp|wa\.me/.test(texto)) return "WhatsApp";
-    if (/google/.test(texto)) return "Google";
-    if (/linkedin|lnkd/.test(texto)) return "LinkedIn";
-    if (/youtube|youtu\.be/.test(texto)) return "YouTube";
-    if (/pinterest/.test(texto)) return "Pinterest";
-    if (/bing|yahoo|duckduckgo/.test(texto)) return "Outros buscadores";
-    if (ref === "tatielemilani.com" || ref === location.hostname) return "Navegando no site";
-    if (texto) return texto.slice(0, 40);
-    return "Direto";
+    if (/Instagram/.test(ua) || /instagram|^ig\.me/.test(ref)) return "Instagram";
+    if (/TikTok|musical_ly|Bytedance/.test(ua) || /tiktok|musical\.ly/.test(ref)) return "TikTok";
+    if (/LinkedInApp/.test(ua) || /linkedin|lnkd\.in/.test(ref)) return "LinkedIn";
+    if (/Barcelona/.test(ua) || /threads\.(net|com)/.test(ref)) return "Threads";
+    if (/FBAN|FBAV|FB_IAB/.test(ua) || /facebook|^fb\.|messenger/.test(ref)) return "Facebook";
+    if (/Pinterest/.test(ua) || /pinterest|pin\.it/.test(ref)) return "Pinterest";
+    if (/Snapchat/.test(ua) || /snapchat/.test(ref)) return "Snapchat";
+    if (/Telegram/.test(ua) || /telegram|t\.me/.test(ref)) return "Telegram";
+    if (/whatsapp|wa\.me/.test(ref)) return "WhatsApp";
+    if (/^t\.co$|twitter|^x\.com/.test(ref)) return "X (Twitter)";
+    if (/youtube|youtu\.be/.test(ref)) return "YouTube";
+    if (/mail\.google|android\.gm|outlook|live\.com|office|yahoo\.mail|mail\./.test(ref)) return "E-mail";
+    if (/chatgpt|openai|perplexity|claude\.ai|gemini/.test(ref)) return "Assistente de IA";
+    if (/GSA\//.test(ua) || /google/.test(ref)) return "Google";
+    if (/bing|yahoo|duckduckgo|ecosia|yandex|brave/.test(ref)) return "Outros buscadores";
+    if (ref === "tatielemilani.com" || ref === location.hostname) {
+      try { var antes = sessionStorage.getItem("tm_origem"); if (antes) return antes; } catch (e) { /* segue */ }
+      return "Navegando no site";
+    }
+    if (ref) return ref.slice(0, 40); // outro site: mostra o endereço (ex: uma plataforma de UGC)
+    return "Direto"; // digitou o endereço, link salvo, ou app que esconde a origem (WhatsApp, e-mail no celular)
   }
   var origem = nomeOrigem();
+  try { if (origem !== "Navegando no site") sessionStorage.setItem("tm_origem", origem); } catch (e) { /* segue */ }
 
   function enviar(dados) {
     dados.pagina = pagina; dados.visitante = visitante; dados.sessao = sessao;
@@ -52,7 +89,7 @@
     try { fetch(URL_EVENTO, { method: "POST", body: corpo, keepalive: true, mode: "cors", headers: { "Content-Type": "text/plain" } }); } catch (e) { /* sem rede */ }
   }
 
-  enviar({ tipo: "visita", origem: origem, utm_source: utmSource, utm_campaign: params.get("utm_campaign") || "", idioma: navigator.language || "" });
+  enviar({ tipo: "visita", origem: origem, utm_source: utmSource, utm_campaign: params.get("utm_campaign") || "", referencia: referencia, idioma: navigator.language || "" });
 
   // Cliques nos links e botões (WhatsApp, Instagram, e-mail, lojas...)
   function categoria(href) {
