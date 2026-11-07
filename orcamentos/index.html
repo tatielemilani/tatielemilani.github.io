@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Orçamento</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@1,400;1,500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{--vinho:#8c1d24;--vinho2:#6c141a;--nude:#d9a79c;--destaque:#f1d6c4;--tinta:#2a1a18;--tinta2:#5e4b47;--creme:#f4eee6}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Plus Jakarta Sans',sans-serif;background:#ebe3d8;color:var(--tinta);padding:24px 16px}
+.tabs{max-width:720px;margin:0 auto 16px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.tabs button{padding:9px 16px;border:1.5px solid var(--vinho);border-radius:99px;background:transparent;color:var(--vinho);font:700 13px 'Plus Jakarta Sans';cursor:pointer}
+.tabs button.on{background:var(--vinho);color:#fff}
+.wrap{overflow-x:auto}
+#sheet{width:720px;margin:auto;background:var(--creme);padding:32px;position:relative;overflow:hidden}
+#sheet:before{content:"";position:absolute;width:300px;height:300px;border-radius:50%;background:var(--nude);opacity:.2;top:-150px;right:-110px}
+/* topo */
+.top{display:flex;align-items:center;gap:16px;position:relative;margin-bottom:22px}
+.pic{background:#e4d9cc center/cover no-repeat;display:grid;place-items:center;color:var(--tinta2);font-size:10px;text-align:center;cursor:pointer;border-radius:50%;flex:none}
+.photo{width:72px;height:72px;border:3px solid #fff;box-shadow:0 4px 14px rgba(42,26,24,.15)}
+.logo{width:64px;height:64px;border:2px solid #fff;background-size:contain;background-color:#fff}
+h1{font-family:'Inter Tight';font-size:40px;line-height:1;margin:0;color:var(--vinho);letter-spacing:-.04em}
+.who{font-size:12px;font-weight:700;color:var(--tinta);margin-top:10px;display:flex;align-items:center;gap:10px}
+.chip{background:transparent;color:var(--vinho);border:1px solid var(--nude);border-radius:99px;padding:3px 10px;font-size:10.5px}
+.para-marca{margin-left:auto;display:flex;align-items:center;gap:12px;text-align:right}
+.para-marca small{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--tinta)}
+.para-marca b{font-family:'Playfair Display';font-style:italic;font-weight:500;font-size:24px;color:var(--vinho)}
+/* cartões */
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;position:relative}
+.single .cards{grid-template-columns:1fr}
+.card{background:#fff;border-radius:18px;padding:18px}
+.card h3{display:inline-block;vertical-align:middle;margin-right:8px!important;font-family:'Inter Tight';font-size:22px;margin:0;letter-spacing:-.03em;color:var(--tinta);line-height:1}
+.uso{display:inline-block;background:var(--vinho);color:#fff;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;border-radius:99px;padding:3px 10px;margin:0;vertical-align:middle}
+.card h3+.uso+div{margin-top:12px}
+.row{display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:5px 0;border-bottom:1px dashed #eadfd3}
+.row:last-child{border:0}
+.row span:last-child{font-weight:700;white-space:nowrap}
+.row i{font-style:normal;font-size:10px;color:var(--tinta2)}
+.packs{display:grid;grid-template-columns:1fr;gap:8px;margin-top:12px}
+.pack{background:var(--vinho);color:#fff;border-radius:12px;padding:12px 14px;display:grid;grid-template-columns:1fr auto;grid-template-areas:"h p" "w p" "s e";column-gap:10px;min-height:68px;align-items:center}
+.pack.alt{background:var(--tinta)}
+.pack:not(:has(.eco)){grid-template-areas:"h p" "w p" "s p"}
+.pack h4{grid-area:h;margin:0 0 3px;font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--destaque);opacity:.85}
+.pack .what{grid-area:w;font-size:12px;white-space:nowrap;font-weight:600;line-height:1.3}
+.pack sup{font-size:7.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-left:1px;vertical-align:super}
+.pack .price{grid-area:p;font-family:'Inter Tight';font-size:20px;line-height:1;letter-spacing:-.02em;text-align:right;white-space:nowrap}
+.pack .save{grid-area:s;font-size:9px;white-space:nowrap;line-height:1.4;color:var(--destaque);opacity:.9;margin-top:3px}
+.pack .eco{grid-area:e;font-size:9px;white-space:nowrap;line-height:1.4;color:var(--destaque);opacity:.9;margin-top:3px;text-align:right}
+.single .card{padding:24px}.single .row{font-size:15px;padding:8px 0}.single .pack .what{font-size:15px}.single .pack .price{font-size:28px}.single .pack h4{font-size:11px}.single .pack .save{font-size:11px}.single .uso{font-size:11px}.single .card h3{font-size:26px}
+/* rodapé */
+.inc{display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin:0;position:relative}
+.inc>div{background:#fff;border-radius:18px;padding:16px 18px;display:flex;flex-direction:column;justify-content:center}
+.inc h5{text-align:center;margin:0 0 12px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--tinta)}
+.inc ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:7px}
+.inc li{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:500;background:#f8efe9;color:var(--tinta);border-radius:99px;padding:5px 12px 5px 5px;line-height:1.2}
+.inc li:before{content:"✓";flex:none;width:18px;height:18px;border-radius:50%;background:var(--vinho);color:#fff;font-size:10px;display:grid;place-items:center;font-weight:700}
+.inc .nao li{background:transparent;border:1px dashed var(--nude);color:var(--tinta2)}
+.inc .nao li:before{content:"✕";background:var(--destaque);color:var(--vinho)}
+#sheet:not(.single) .inc{grid-template-columns:1fr;gap:12px}
+.single .inc>div:not(.nao) ul{display:grid;grid-template-columns:repeat(2,max-content);justify-content:center}
+.foot{display:flex;justify-content:space-between;margin-top:14px;font-size:12px;font-weight:700;color:var(--tinta);position:relative}
+.hide{display:none}
+[contenteditable]{outline:none}
+[contenteditable]:hover,[contenteditable]:focus{box-shadow:0 0 0 1px var(--nude);border-radius:4px}
+.exporting [contenteditable]{box-shadow:none!important}
+.exporting .empty{color:transparent}
+.actions{max-width:720px;margin:18px auto 0;text-align:center;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.actions button{padding:14px 26px;border:0;border-radius:99px;background:var(--vinho);color:#fff;font:700 14px 'Plus Jakarta Sans';cursor:pointer}
+.actions button.sec{background:transparent;color:var(--vinho);border:1.5px solid var(--vinho)}
+.hint{text-align:center;font-size:12px;color:var(--tinta2);margin-top:10px}
+input[type=file]{display:none}
+</style>
+</head>
+<body>
+<nav class="tabs">
+  <button data-t="completo" class="on">Completo</button>
+  <button data-t="ugc">UGC</button>
+  <button data-t="publi">Publicidade</button>
+  <button data-t="clips">Clips</button>
+  <button data-t="tiktok">TikTok Shop</button>
+</nav>
+
+<div class="wrap">
+<div id="sheet">
+  <div class="top">
+    <div class="pic photo empty" id="photo">sua<br>foto</div>
+    <div>
+      <h1>Orçamento</h1>
+      <div class="who"><span contenteditable>Tatiele Milani · <span id="date"></span></span></div>
+    </div>
+    <div class="para-marca">
+      <div><small contenteditable>proposta para</small><b contenteditable>Nome da Marca</b></div>
+      <div class="pic logo empty" id="logo">+ logo</div>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card" data-in="completo ugc">
+      <h3 contenteditable>UGC</h3>
+      <div class="uso" contenteditable>conteúdo para a marca</div>
+      <div contenteditable>
+        <div class="row"><span>1 vídeo <i>· ads 3 meses</i></span><span>R$ 350</span></div>
+        <div class="row"><span>1 foto</span><span>R$ 65</span></div>
+        <div class="row"><span>3 fotos</span><span>R$ 150</span></div>
+      </div>
+      <div class="packs">
+        <div class="pack"><h4 contenteditable>Pacote 1</h4><div class="what" contenteditable>2 vídeos + 4 fotos</div><div class="price" contenteditable>R$ 600</div><div class="save" contenteditable>ads 5 meses</div><div class="eco" contenteditable>economiza R$ 300</div></div>
+        <div class="pack alt"><h4 contenteditable>Pacote 2</h4><div class="what" contenteditable>3 vídeos + 6 fotos</div><div class="price" contenteditable>R$ 900</div><div class="save" contenteditable>ads 8 meses</div><div class="eco" contenteditable>economiza R$ 550</div></div>
+      </div>
+    </div>
+
+    <div class="card" data-in="completo publi">
+      <h3 contenteditable>Publicidade</h3>
+      <div class="uso" contenteditable>no meu perfil</div>
+      <div contenteditable>
+        <div class="row"><span>Reels ou TikTok <i>· collab + ads 3 meses</i></span><span>R$ 420</span></div>
+        <div class="row"><span>Stories <i>· 3 telas</i></span><span>R$ 150</span></div>
+        <div class="row"><span>Carrossel</span><span>R$ 250</span></div>
+      </div>
+      <div class="packs">
+        <div class="pack"><h4 contenteditable>Pacote 3</h4><div class="what" contenteditable>Reels + TikTok + Stories</div><div class="price" contenteditable>R$ 850</div><div class="save" contenteditable>TikTok em repost</div><div class="eco" contenteditable>economiza R$ 140</div></div>
+        <div class="pack alt"><h4 contenteditable>Pacote 4</h4><div class="what" contenteditable>2 Reels + 2 TikTok + 2 Stories</div><div class="price" contenteditable>R$ 1.000</div><div class="save" contenteditable>TikTok em repost</div><div class="eco" contenteditable>economiza R$ 680</div></div>
+      </div>
+    </div>
+
+    <div class="card" data-in="completo clips">
+      <h3 contenteditable>Clips</h3>
+      <div class="uso" contenteditable>para marketplace</div>
+      <div contenteditable>
+        <div class="row"><span>Até 30 clips</span><span>R$ 65 cada</span></div>
+        <div class="row"><span>30 a 55 clips</span><span>R$ 55 cada</span></div>
+        <div class="row"><span>Acima de 55</span><span>R$ 40 cada</span></div>
+      </div>
+      <div class="packs">
+        <div class="pack"><h4 contenteditable>Vitrine</h4><div class="what" contenteditable>10 clips</div><div class="price" contenteditable>R$ 600</div><div class="save" contenteditable>até 3 produtos</div></div>
+        <div class="pack alt"><h4 contenteditable>Catálogo</h4><div class="what" contenteditable>40 clips</div><div class="price" contenteditable>R$ 1.500</div><div class="save" contenteditable>até 10 produtos</div></div>
+      </div>
+    </div>
+
+    <div class="card" data-in="tiktok">
+      <h3 contenteditable>TikTok Shop</h3>
+      <div class="uso" contenteditable>venda direta no TikTok</div>
+      <div contenteditable>
+        <div class="row"><span>1 vídeo com link</span><span>R$ 250</span></div>
+        <div class="row"><span>Comissão por venda</span><span>a combinar</span></div>
+      </div>
+      <div class="packs">
+        <div class="pack"><h4 contenteditable>Pacote 5</h4><div class="what" contenteditable>4 vídeos</div><div class="price" contenteditable>R$ 850</div><div class="save" contenteditable>+ comissão</div></div>
+        <div class="pack alt"><h4 contenteditable>Pacote 6</h4><div class="what" contenteditable>8 vídeos</div><div class="price" contenteditable>R$ 1.500</div><div class="save" contenteditable>+ comissão</div></div>
+      </div>
+    </div>
+  <div class="inc">
+    <div contenteditable><h5>Incluso</h5><ul><li>Roteiro</li><li>Filmagem e edição</li><li>2 alterações por vídeo</li><li>Entrega no Google Drive</li></ul></div>
+    <div class="nao" contenteditable><h5>Não incluso</h5><ul><li>Permuta dos produtos</li><li>Frete dos produtos</li></ul></div>
+  </div>
+  </div>
+
+  <div class="foot"><span contenteditable>*Orçamento válido por 30 dias. Após esse prazo, solicite nova cotação.</span></div>
+</div>
+</div>
+
+<div class="actions">
+  <button id="pdf">Baixar PDF</button>
+  <button id="png" class="sec">Baixar imagem</button>
+</div>
+<div class="hint">Clique em qualquer texto para editar. Clique na foto ou na logo para trocar.</div>
+<input type="file" id="file" accept="image/*">
+
+<script>
+const $=id=>document.getElementById(id);
+$('date').textContent=new Date().toLocaleDateString('pt-BR');
+let tab='completo';
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
+  tab=b.dataset.t;
+  document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('[data-in]').forEach(s=>s.classList.toggle('hide',!s.dataset.in.split(' ').includes(tab)));
+  $('sheet').classList.toggle('single',tab!=='completo');
+});
+document.querySelector(".tabs button.on").click();
+let target=null;
+['photo','logo'].forEach(id=>$(id).onclick=()=>{target=$(id);$('file').value='';$('file').click()});
+function setPic(el,src){el.style.backgroundImage=`url(${src})`;el.textContent='';el.classList.remove('empty')}
+try{const p=localStorage.getItem('orc-photo');if(p)setPic($('photo'),p)}catch(e){}
+$('file').onchange=()=>{const f=$('file').files[0];if(!f||!target)return;const r=new FileReader();
+  r.onload=()=>{setPic(target,r.result);if(target.id==='photo'){try{localStorage.setItem('orc-photo',r.result)}catch(e){}}};r.readAsDataURL(f)};
+const slug=s=>s.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-');
+const nome=()=>'orcamento-'+(tab==='completo'?'':tab+'-')+(slug(document.querySelector('.para-marca b').textContent)||'marca');
+async function render(){document.activeElement.blur();document.body.classList.add('exporting');
+  const c=await html2canvas($('sheet'),{scale:2.5});document.body.classList.remove('exporting');return c}
+$('png').onclick=async()=>{const c=await render();const a=document.createElement('a');a.download=nome()+'.png';a.href=c.toDataURL('image/png');a.click()};
+$('pdf').onclick=async()=>{const c=await render();const w=c.width/2.5,h=c.height/2.5;
+  const doc=new jspdf.jsPDF({unit:'px',format:[w,h],orientation:w>h?'l':'p',hotfixes:['px_scaling']});
+  doc.addImage(c.toDataURL('image/jpeg',.95),'JPEG',0,0,w,h);doc.save(nome()+'.pdf')};
+</script>
+</body>
+</html>
