@@ -1686,6 +1686,7 @@ function midia(capa, legenda, alt, extra = '') {
     indice = (i + lista.length) % lista.length;
     const link = lista[indice];
     const titulo = link.dataset.titulo || '';
+    // Vídeos do Drive tocam no tocador do Google (o Drive não deixa tocar o arquivo direto de outro site)
     player.innerHTML = link.dataset.drive
       ? `<iframe src="https://drive.google.com/file/d/${encodeURIComponent(link.dataset.drive)}/preview" allow="autoplay; fullscreen" allowfullscreen title="Vídeo para ${esc(titulo)}"></iframe>`
       : `<video src="${esc(link.dataset.arquivo)}" controls autoplay playsinline preload="auto" aria-label="Vídeo para ${esc(titulo)}"></video>`;
