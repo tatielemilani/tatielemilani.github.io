@@ -1612,12 +1612,15 @@ function midia(capa, legenda, alt, extra = '') {
   let atual = NICHOS[0].id;
 
   // O vídeo e a capa ficam no próprio site: imagens/videos/ARQUIVO.mp4 e imagens/capas/ARQUIVO.jpg
+  // Os escolhidos no painel (t.drive) vêm do Google Drive: capa e vídeo direto de lá
   function card(t, nicho) {
-    const video = `imagens/videos/${t.arquivo}.mp4`;
+    const drive = t.drive ? encodeURIComponent(t.drive) : '';
+    const video = drive ? `https://drive.google.com/file/d/${drive}/view` : `imagens/videos/${t.arquivo}.mp4`;
+    const capa = drive ? `https://drive.google.com/thumbnail?id=${drive}&sz=w540` : `imagens/capas/${t.arquivo}.jpg`;
     return `<figure class="trabalho">
       <a class="trabalho-link" href="${esc(video)}" target="_blank" rel="noopener"
-         data-arquivo="${esc(video)}" data-titulo="${esc(t.marca)}" aria-label="Assistir vídeo para ${esc(t.marca)}, nicho ${esc(nicho)}">
-        <img class="trabalho-capa" src="imagens/capas/${esc(t.arquivo)}.jpg" alt="Capa do vídeo para ${esc(t.marca)}" decoding="async" width="540" height="960">
+         data-arquivo="${esc(video)}" data-drive="${esc(t.drive || '')}" data-titulo="${esc(t.marca)}" aria-label="Assistir vídeo para ${esc(t.marca)}, nicho ${esc(nicho)}">
+        <img class="trabalho-capa" src="${esc(capa)}" alt="Capa do vídeo para ${esc(t.marca)}" decoding="async" width="540" height="960" referrerpolicy="no-referrer">
         <span class="trabalho-marca">${esc(t.marca)}</span>
         ${play}
       </a>
@@ -1659,6 +1662,18 @@ function midia(capa, legenda, alt, extra = '') {
   window.addEventListener('resize', atualizarSetas);
 
   desenhar();
+
+  // Vídeos do Drive escolhidos no painel: entram no começo do nicho deles
+  fetch('https://llrkeqnqqbwpjnpvpxtl.supabase.co/functions/v1/drive-videos?site=1')
+    .then(r => (r.ok ? r.json() : { videos: [] }))
+    .then(({ videos }) => {
+      const novos = (videos || []).filter(v => v.drive_id && v.marca && NICHOS.some(n => n.id === v.nicho))
+        .map(v => ({ nicho: v.nicho, marca: v.marca, drive: v.drive_id }));
+      if (!novos.length) return;
+      TRABALHOS.unshift(...novos.reverse());
+      desenhar();
+    })
+    .catch(() => { /* sem rede: fica só com os vídeos do site */ });
 })();
 
 // Player de vídeo: abre o vídeo aqui mesmo no site, com setas para ir ao anterior e ao próximo do mesmo nicho
@@ -1671,7 +1686,9 @@ function midia(capa, legenda, alt, extra = '') {
     indice = (i + lista.length) % lista.length;
     const link = lista[indice];
     const titulo = link.dataset.titulo || '';
-    player.innerHTML = `<video src="${esc(link.dataset.arquivo)}" controls autoplay playsinline preload="auto" aria-label="Vídeo para ${esc(titulo)}"></video>`;
+    player.innerHTML = link.dataset.drive
+      ? `<iframe src="https://drive.google.com/file/d/${encodeURIComponent(link.dataset.drive)}/preview" allow="autoplay; fullscreen" allowfullscreen title="Vídeo para ${esc(titulo)}"></iframe>`
+      : `<video src="${esc(link.dataset.arquivo)}" controls autoplay playsinline preload="auto" aria-label="Vídeo para ${esc(titulo)}"></video>`;
     modal.querySelector('.video-caixa').setAttribute('aria-label', 'Vídeo para ' + titulo);
     const varios = lista.length > 1;
     anterior.hidden = proximo.hidden = contador.hidden = !varios;
