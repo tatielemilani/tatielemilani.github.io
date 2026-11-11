@@ -12,7 +12,7 @@
     'Meu começo no UGC': 'How I started in UGC',
     'o curso que eu fiz pra começar': 'the course I took to get started',
     'vídeos que criei pra marcas': "videos I've made for brands",
-    'Parcerias UGC e publis': 'UGC & brand deals',
+    'Parcerias': 'Partnerships',
     'fala comigo no WhatsApp': 'talk to me on WhatsApp',
     'Mandar um e-mail': 'Send me an email',
     'Indicações': 'Recommendations',
