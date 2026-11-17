@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Roteiro · Tatiele Milani</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/imagens/icone-32.png">
+<style>
+  html, body { margin: 0; height: 100%; background: #EFE6DA; }
+  iframe { border: 0; width: 100%; height: 100%; display: block; }
+  .msg { font-family: system-ui, sans-serif; color: #3A2A22; text-align: center; padding: 80px 20px; }
+</style>
+</head>
+<body>
+<script>
+  // Abre o roteiro do Google Apps Script dentro do site: tatielemilani.com/roteiro/?r=NomeDaAba
+  var APP = 'https://script.google.com/macros/s/AKfycbxn-qg3DRhtmJTFriX-Jxi1cHxv7GCBtCJuaaI7nMhjby2HeicFnNjBQhVef54_REyU/exec';
+  var r = new URLSearchParams(location.search).get('r') || '';
+  if (/^[A-Za-z0-9-]{1,80}$/.test(r)) {
+    var f = document.createElement('iframe');
+    f.src = APP + '?r=' + encodeURIComponent(r);
+    f.title = 'Roteiro';
+    document.body.appendChild(f);
+  } else {
+    var p = document.createElement('p');
+    p.className = 'msg';
+    p.textContent = 'Roteiro não encontrado. Confira o link.';
+    document.body.appendChild(p);
+  }
+</script>
+</body>
+</html>
