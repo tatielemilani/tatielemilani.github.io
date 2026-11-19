@@ -96,7 +96,17 @@
     try { fetch(URL_EVENTO, { method: "POST", body: corpo, keepalive: true, mode: "cors", headers: { "Content-Type": "text/plain" } }); } catch (e) { /* sem rede */ }
   }
 
-  enviar({ tipo: "visita", origem: origem, utm_source: utmSource, utm_campaign: params.get("utm_campaign") || "", referencia: referencia, idioma: navigator.language || "" });
+  // Idioma em que a pessoa está vendo o site (botão PT | EN): vai junto da visita e da saída,
+  // e quando ela troca no meio da visita conta como clique no botão de idioma.
+  function lingua() { return /^en/i.test(document.documentElement.lang || "") ? "en" : "pt"; }
+  var linguaAtual = lingua();
+  enviar({ tipo: "visita", origem: origem, utm_source: utmSource, utm_campaign: params.get("utm_campaign") || "", referencia: referencia, idioma: navigator.language || "", categoria: linguaAtual });
+  try {
+    new MutationObserver(function () {
+      var l = lingua();
+      if (l !== linguaAtual) { linguaAtual = l; enviar({ tipo: "clique", categoria: "Idioma", rotulo: l === "en" ? "EN" : "PT", destino: l }); }
+    }).observe(document.documentElement, { attributes: true, attributeFilter: ["lang"] });
+  } catch (e) { /* navegador antigo: fica só o idioma de entrada */ }
 
   // Cliques nos links e botões (WhatsApp, Instagram, e-mail, lojas...)
   function categoria(href) {
@@ -192,7 +202,7 @@
   // Tempo na página e rolagem: manda quando a pessoa sai (ou troca de aba)
   var inicio = Date.now(), visivelDesde = Date.now(), total = 0, mandou = false;
   function somar() { if (visivelDesde) { total += Date.now() - visivelDesde; visivelDesde = 0; } }
-  function saida() { medirRolagem(); mandou = true; enviar({ tipo: "saida", segundos: Math.round(total / 1000), rolagem: rolagem }); }
+  function saida() { medirRolagem(); mandou = true; enviar({ tipo: "saida", segundos: Math.round(total / 1000), rolagem: rolagem, categoria: lingua() }); }
   // "Quem está no site agora": sinal a cada 30s com a página na tela; "saí" quando fecha ou troca de aba
   function sinal() { if (document.visibilityState === "visible") enviar({ tipo: "ping", origem: origem }); }
   setInterval(sinal, 30000);
